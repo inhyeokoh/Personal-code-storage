@@ -14,13 +14,6 @@ public class InventoryManager : SubClass<GameManager>
     UI_Inventory _inven;
     UI_PlayerInfo _playerInfo;
 
-    enum Enum_Sort // 아이템 정렬 방법
-    {
-        Grade,
-        DetailType,
-        ID
-    }
-
     protected override void _Clear()
     {        
     }
