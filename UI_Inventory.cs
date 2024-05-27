@@ -9,10 +9,12 @@ using UnityEngine.UI;
 public class UI_Inventory : UI_Entity
 {
     GameObject _content;
+    public GameObject goldPanel;
     public GameObject dragImg;
     public GameObject descrPanel;
     public GameObject dropConfirmPanel;
     public GameObject dropCountConfirmPanel;
+    public GameObject closeBtn;
 
     public Rect panelRect;
     Vector2 _descrUISize;
@@ -38,6 +40,7 @@ public class UI_Inventory : UI_Entity
         Expansion,
         ScrollView,
         TempAdd,
+        Gold,
         Close,
         DragImg,
         DescrPanel,
@@ -62,10 +65,12 @@ public class UI_Inventory : UI_Entity
         upTogNames = _entities[(int)Enum_UI_Inventory.Panel_U].GetComponentsInChildren<TMP_Text>();
         upToggles = _entities[(int)Enum_UI_Inventory.Panel_U].GetComponentsInChildren<Toggle>();
         panelRect = _entities[(int)Enum_UI_Inventory.Panel].GetComponent<RectTransform>().rect;
+        goldPanel = _entities[(int)Enum_UI_Inventory.Gold].gameObject;
         dragImg = _entities[(int)Enum_UI_Inventory.DragImg].gameObject;
         descrPanel = _entities[(int)Enum_UI_Inventory.DescrPanel].gameObject;
         dropConfirmPanel = _entities[(int)Enum_UI_Inventory.DropConfirm].gameObject;
         dropCountConfirmPanel = _entities[(int)Enum_UI_Inventory.DropCountConfirm].gameObject;
+        closeBtn = _entities[(int)Enum_UI_Inventory.Close].gameObject;
         _descrUISize = _GetUISize(descrPanel);
 
         _items = GameManager.Inven.items;
@@ -73,6 +78,7 @@ public class UI_Inventory : UI_Entity
 
         _SetPanel_U();
         _DrawSlots();
+        UpdateGoldPanel(GameManager.Inven.gold);
 
         foreach (var _subUI in _subUIs)
         {
@@ -267,6 +273,7 @@ public class UI_Inventory : UI_Entity
         GameManager.Inven.ExtendItemList();
     }
 
+    // 아이템 획득 테스트용도
     void _PressGetItem()
     {
         var item = ItemParsing.StateItemDataReader(500);
@@ -285,5 +292,10 @@ public class UI_Inventory : UI_Entity
         }
 
         return false;
+    }
+
+    public void UpdateGoldPanel(long gold)
+    {
+        goldPanel.transform.GetChild(0).GetComponent<TMP_Text>().text = gold.ToString();
     }
 }
