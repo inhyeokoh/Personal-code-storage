@@ -14,7 +14,7 @@ public class UI_ItemSlot : UI_Entity
     // 현재 슬롯
     Image _iconImg;
     GameObject _amountText;
-    public int index;
+    public int Index { get; set; }
 
     // 드롭 시 위치한 슬롯
     int _otherIndex;
@@ -70,29 +70,29 @@ public class UI_ItemSlot : UI_Entity
             
             if (CheckSlotDrop(data) && !_inven.CheckUIOutDrop()) // 드래그 드롭한 오브젝트가 아이템 슬롯이어야함
             {
-                _otherIndex = data.pointerCurrentRaycast.gameObject.transform.parent.GetComponent<UI_ItemSlot>().index;
-                GameManager.Inven.DragAndDropItems(index, _otherIndex);
+                _otherIndex = data.pointerCurrentRaycast.gameObject.transform.parent.GetComponent<UI_ItemSlot>().Index;
+                GameManager.Inven.DragAndDropItems(Index, _otherIndex);
             }
             else if (_inven.CheckUIOutDrop()) // 인벤토리 UI 밖에 드롭할 경우
             {
                 if (CheckSlotDrop(data)) // 드래그 드롭한 오브젝트가 장비 슬롯인 경우
                 {
-                    _otherIndex = data.pointerCurrentRaycast.gameObject.transform.parent.GetComponent<UI_EquipSlot>().index;
-                    GameManager.Inven.InvenToEquipSlot(index, _otherIndex);
+                    _otherIndex = data.pointerCurrentRaycast.gameObject.transform.parent.GetComponent<UI_EquipSlot>().Index;
+                    GameManager.Inven.InvenToEquipSlot(Index, _otherIndex);
                 }
                 else
                 {
-                    if (_invenItems[index].count == 1)
+                    if (_invenItems[Index].count == 1)
                     {
                         // 버릴지 되묻는 팝업
                         _inven.dropConfirmPanel.SetActive(true);
-                        _inven.dropConfirmPanel.transform.GetChild(0).GetComponent<UI_DropConfirm>().ChangeText(UI_DropConfirm.Enum_DropUIParent.Inven, index);
+                        _inven.dropConfirmPanel.transform.GetChild(0).GetComponent<UI_DropConfirm>().ChangeText(UI_DropConfirm.Enum_DropUIParent.Inven, Index);
                     }
                     else
                     {
                         // 버릴 아이템 이름 + 수량 적는 팝업
                         _inven.dropCountConfirmPanel.SetActive(true);
-                        _inven.dropCountConfirmPanel.transform.GetChild(0).GetComponent<UI_DropCountConfirm>().ChangeText(UI_DropCountConfirm.Enum_DropUIParent.Inven, index);
+                        _inven.dropCountConfirmPanel.transform.GetChild(0).GetComponent<UI_DropCountConfirm>().ChangeText(UI_DropCountConfirm.Enum_DropUIParent.Inven, Index);
                     }
                 }
             }
@@ -131,14 +131,14 @@ public class UI_ItemSlot : UI_Entity
                 if (GameManager.UI.Shop.activeSelf)
                 {
                     GameManager.UI.Shop.GetComponent<UI_Shop>().panel_U_Buttons[1].isOn = true; // 판매탭 활성화
-                    GameManager.Inven.InvenToShop(index);
+                    GameManager.Inven.InvenToShop(Index);
                 }
                 else
                 {
-                    if (_invenItems[index].itemType == Enum_ItemType.Equipment) // 장비에 우클릭 한 경우
+                    if (_invenItems[Index].itemType == Enum_ItemType.Equipment) // 장비에 우클릭 한 경우
                     {
                         // TODO 장착 불가 경우
-                        GameManager.Inven.EquipItem(index);
+                        GameManager.Inven.EquipItem(Index);
                     }
                 }
             }
@@ -148,19 +148,19 @@ public class UI_ItemSlot : UI_Entity
     // 슬롯 번호에 맞게 아이템 그리기
     public void ItemRender()
     {
-        if (_invenItems[index] != null)
+        if (_invenItems[Index] != null)
         {
             _iconImg.color = new Color32(255, 255, 255, 255);
-            _iconImg.sprite = _invenItems[index].icon;
+            _iconImg.sprite = _invenItems[Index].icon;
             // 장비 타입은 수량 고정1 이라 수량 표기X
-            if (_invenItems[index].itemType == Enum_ItemType.Equipment)
+            if (_invenItems[Index].itemType == Enum_ItemType.Equipment)
             {
                 _amountText.SetActive(false);
             }
             else
             {
                 _amountText.SetActive(true);
-                _amountText.GetComponent<TMP_Text>().text = $"{_invenItems[index].count}";
+                _amountText.GetComponent<TMP_Text>().text = $"{_invenItems[Index].count}";
             }
         }
         else
@@ -185,7 +185,7 @@ public class UI_ItemSlot : UI_Entity
 
     bool CheckItemNull()
     {
-        return GameManager.Inven.items[index] == null;
+        return GameManager.Inven.items[Index] == null;
     }
 
     // 드롭 시 슬롯에 벗어나지 않았는지 확인
@@ -201,16 +201,16 @@ public class UI_ItemSlot : UI_Entity
 
     void ShowItemInfo()
     {
-        _inven.descrPanel.transform.GetChild(0).GetComponentInChildren<TMP_Text>().text = GameManager.Inven.items[index].name; // 아이템 이름
+        _inven.descrPanel.transform.GetChild(0).GetComponentInChildren<TMP_Text>().text = GameManager.Inven.items[Index].name; // 아이템 이름
         _inven.descrPanel.transform.GetChild(1).GetComponent<Image>().sprite = _iconImg.sprite; // 아이콘 이미지
 
-        if (GameManager.Inven.items[index].itemType == Enum_ItemType.Equipment) // 장비아이템 설명
+        if (GameManager.Inven.items[Index].itemType == Enum_ItemType.Equipment) // 장비아이템 설명
         {
-            StateItemData itemData = ItemParsing.itemDatas[GameManager.Inven.items[index].id] as StateItemData;
+            StateItemData itemData = ItemParsing.itemDatas[GameManager.Inven.items[Index].id] as StateItemData;
             if (itemData != null)
             {
                 int[] stats = {itemData.level, itemData.attack, itemData.defense, itemData.speed, itemData.attackSpeed, itemData.maxHp, itemData.maxMp};
-                string descLines = string.Format(GameManager.Inven.items[index].desc, $"{itemData.level}\n", $"{itemData.attack}\n", $"{itemData.defense}\n", $"{itemData.speed}\n", $"{itemData.attackSpeed}\n", $"{itemData.maxHp}\n", $"{itemData.maxMp}\n");
+                string descLines = string.Format(GameManager.Inven.items[Index].desc, $"{itemData.level}\n", $"{itemData.attack}\n", $"{itemData.defense}\n", $"{itemData.speed}\n", $"{itemData.attackSpeed}\n", $"{itemData.maxHp}\n", $"{itemData.maxMp}\n");
                 string[] lines = descLines.Split("\n");
 
                 string desc = $"{lines[0]} \n";
@@ -229,7 +229,8 @@ public class UI_ItemSlot : UI_Entity
         else
         {
             _inven.descrPanel.transform.GetChild(2).GetComponentInChildren<TMP_Text>().text =
-                GameManager.Inven.items[index].desc; // 아이템 설명
+                GameManager.Inven.items[Index].desc; // 아이템 설명
         }
     }
 }
+
