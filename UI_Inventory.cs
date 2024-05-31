@@ -23,12 +23,11 @@ public class UI_Inventory : UI_Entity
     Toggle[] upToggles;
 
     List<ItemData> _items;
-    int _totalSlotCount;
 
     // 드래그 Field
-    private Vector2 _invenPos;
-    private Vector2 _dragBeginPos;
-    private Vector2 _offset;
+    Vector2 _invenPos;
+    Vector2 _dragBeginPos;
+    Vector2 _offset;
 
     enum Enum_UI_Inventory
     {
@@ -74,11 +73,10 @@ public class UI_Inventory : UI_Entity
         _descrUISize = _GetUISize(descrPanel);
 
         _items = GameManager.Inven.items;
-        _totalSlotCount = GameManager.Inven.totalSlotCount;
 
         _SetPanel_U();
         _DrawSlots();
-        UpdateGoldPanel(GameManager.Inven.gold);
+        UpdateGoldPanel(GameManager.Inven.Gold);
 
         foreach (var _subUI in _subUIs)
         {
@@ -143,11 +141,11 @@ public class UI_Inventory : UI_Entity
     // 인벤토리 내 초기 슬롯 생성
     void _DrawSlots()
     {
-        for (int i = 0; i < _totalSlotCount; i++)
+        for (int i = 0; i < GameManager.Inven.TotalSlotCount; i++)
         {
             GameObject _itemSlot = GameManager.Resources.Instantiate("Prefabs/UI/Scene/ItemSlot", _content.transform);
             _itemSlot.name = "ItemSlot_" + i;
-            _itemSlot.GetComponent<UI_ItemSlot>().index = i;
+            _itemSlot.GetComponent<UI_ItemSlot>().Index = i;
         }
     }
 
@@ -262,14 +260,13 @@ public class UI_Inventory : UI_Entity
     // 인벤 확장
     void _ExpandSlot(int newSlot = 6)
     {
-        for (int i = _totalSlotCount; i < _totalSlotCount + newSlot; i++)
+        for (int i = GameManager.Inven.TotalSlotCount; i < GameManager.Inven.TotalSlotCount + newSlot; i++)
         {
             GameObject _itemSlot = GameManager.Resources.Instantiate("Prefabs/UI/Scene/ItemSlot", _content.transform);
             _itemSlot.name = "ItemSlot_" + i;
-            _itemSlot.GetComponent<UI_ItemSlot>().index = i;
+            _itemSlot.GetComponent<UI_ItemSlot>().Index = i;
         }
-        GameManager.Inven.totalSlotCount += newSlot;
-        _totalSlotCount = GameManager.Inven.totalSlotCount;
+        GameManager.Inven.TotalSlotCount += newSlot;
         GameManager.Inven.ExtendItemList();
     }
 
