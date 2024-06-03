@@ -10,6 +10,7 @@ using System.Linq;
 public class InventoryManager : SubClass<GameManager>
 {
     public List<ItemData> items; // slot index에 따른 아이템 리스트
+
     public int TotalSlotCount { get; set; } = 30;
 
     public List<ItemData> equips;
@@ -26,7 +27,8 @@ public class InventoryManager : SubClass<GameManager>
         {
             if (gold < 0)
             {
-                Debug.Log("골드 부족");
+                GameManager.UI.OpenPopup(GameManager.UI.InGameConfirmY);
+                GameManager.UI.InGameConfirmY.ChangeText(UI_InGameConfirmY.Enum_ConfirmTypes.NotEnoughMoney);
                 return;
             }
             else
@@ -65,8 +67,8 @@ public class InventoryManager : SubClass<GameManager>
         items = new List<ItemData>(new ItemData[TotalSlotCount]);
         equips = new List<ItemData>(new ItemData[EquipSlotCount]);
 
-        inven = GameObject.Find("PopupCanvas").GetComponentInChildren<UI_Inventory>();
-        _playerInfo = GameObject.Find("PopupCanvas").GetComponentInChildren<UI_PlayerInfo>();
+        inven = GameManager.UI.Inventory;
+        _playerInfo = GameManager.UI.PlayerInfo;
         _GetInvenDataFromTable();
     }
 
@@ -80,7 +82,7 @@ public class InventoryManager : SubClass<GameManager>
             int slotNum = int.Parse(item[i]["slotNum"]);
 
             // id,count,slotNum받고 해당하는 id로 아이템 생성
-            items[slotNum] = ItemParsing.StateItemDataReader(id);
+            items[slotNum] = GameManager.Data.StateItemDataReader(id);
             items[slotNum].count = count;
 
             // TODO 장비아이템은 고유번호
@@ -107,8 +109,8 @@ public class InventoryManager : SubClass<GameManager>
             _ExchangeSlotNum(oldPos, newPos);
         }
         // 이미지 갱신
-        inven.UpdateInvenUI(oldPos);
-        inven.UpdateInvenUI(newPos);
+        inven.UpdateInvenSlot(oldPos);
+        inven.UpdateInvenSlot(newPos);
 
         // TODO 바뀐 내용 서버로 전송
     }
@@ -189,6 +191,8 @@ public class InventoryManager : SubClass<GameManager>
             else
             {
                 // 인벤토리가 가득 찬 경우 처리 (공간 부족 알림 팝업)
+                GameManager.UI.OpenPopup(GameManager.UI.InGameConfirmY);
+                GameManager.UI.InGameConfirmY.ChangeText(UI_InGameConfirmY.Enum_ConfirmTypes.InvenFull);
             }
         }
         else
@@ -254,8 +258,7 @@ public class InventoryManager : SubClass<GameManager>
         // UI 갱신
         for (int i = 0; i < items.Count; i++)
         {
-            // Debug.Log(items[0].id, items[0].icon);
-            inven.UpdateInvenUI(i);
+            inven.UpdateInvenSlot(i);
         }
     }
 
@@ -272,7 +275,7 @@ public class InventoryManager : SubClass<GameManager>
             items[index] = null;
         }
 
-        inven.UpdateInvenUI(index);
+        inven.UpdateInvenSlot(index);
     }
 
     public void DropEquipItem(int index)
@@ -309,7 +312,7 @@ public class InventoryManager : SubClass<GameManager>
         // UI 갱신
         for (int i = 0; i < items.Count; i++)
         {
-            inven.UpdateInvenUI(i);
+            inven.UpdateInvenSlot(i);
         }
     }
 
@@ -426,7 +429,7 @@ public class InventoryManager : SubClass<GameManager>
         equips[equipPos] = items[invenPos];
         items[invenPos] = temp;
 
-        inven.UpdateInvenUI(invenPos);
+        inven.UpdateInvenSlot(invenPos);
         _playerInfo.UpdateEquipUI(equipPos);
     }
 
@@ -445,7 +448,7 @@ public class InventoryManager : SubClass<GameManager>
             equips[equipPos] = temp;
         }
 
-        inven.UpdateInvenUI(invenPos);
+        inven.UpdateInvenSlot(invenPos);
         _playerInfo.UpdateEquipUI(equipPos);
     }
 
@@ -500,27 +503,52 @@ public class InventoryManager : SubClass<GameManager>
             items[index] = temp;
         }
 
-        // 장비창 UI 갱신
+        // 플레이어정보창 UI 갱신
         if (_playerInfo.gameObject.activeSelf)
         {
             _playerInfo.UpdateEquipUI(equipType);
+            _playerInfo.UpdateStatus();
         }
 
         // 인벤토리 UI 갱신
-        inven.UpdateInvenUI(index);
+        inven.UpdateInvenSlot(index);
+    }
+
+    public void ConsumeItem(int index)
+    {
+        if (items[index].count <= 0) return;
+
+        StateItemData sid = items[index] as StateItemData;
+        PlayerController.instance._playerCapability.Use(sid);
+        if (items[index].count > 1)
+        {
+            items[index].count--;
+        }
+        else
+        {
+            items[index] = null;
+        }
+
+        // 플레이어정보창 UI 갱신 -> TODO 이벤트 받는 형식으로 수정
+        if (_playerInfo.gameObject.activeSelf)
+        {
+            _playerInfo.UpdateStatus();
+        }
+
+        inven.UpdateInvenSlot(index);
     }
 
     public void UnEquipItem(int index)
     {
-        // 인벤토리 비어 있는 칸 찾아서 넣기
         int invenEmptySlot = EmptySlot;
+        if (invenEmptySlot == -1) return; // 인벤토리 꽉 찬 경우 해제 불가
+
+        // 인벤토리 비어 있는 칸 찾아서 넣기
         items[invenEmptySlot] = equips[index];
         equips[index] = null;
 
         _playerInfo.UpdateEquipUI(index);
-        inven.UpdateInvenUI(invenEmptySlot);
-
-        // TODO : 인벤토리 꽉 찬 경우 해제 불가 팝업
+        inven.UpdateInvenSlot(invenEmptySlot);      
     }
 
 
@@ -532,9 +560,9 @@ public class InventoryManager : SubClass<GameManager>
         shopSell.shopItems[emptyIndex] = items[index];
         items[index] = null;
 
-        inven.UpdateInvenUI(index);
+        inven.UpdateInvenSlot(index);
         shopSell.UpdateGoldPanel();
-        shopSell.shopItemCount++;
         shopSell.transform.GetChild(0).GetChild(emptyIndex).GetComponent<UI_ShopSlot>().ItemRender();
     }
 }
+
