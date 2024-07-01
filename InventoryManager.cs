@@ -83,7 +83,7 @@ public class InventoryManager : SubClass<GameManager>
     [Obsolete("For testing purposes when DB is not connected")]
     void _GetInvenDataFromDB()
     {
-        var item = CSVReader.Read("Data/SheetsToCSV/bin/Debug/TableFiles/InvenDB");
+        var item = CSVReader.Read("Data/SheetsToCSV/bin/Debug/TableFiles/InvenTable");
         for (int i = 0; i < item.Count; i++)
         {
             int id = int.Parse(item[i]["id"]);
@@ -167,8 +167,9 @@ public class InventoryManager : SubClass<GameManager>
         }
     }
 
-    public void ExtendItemList()
+    public void ExtendItemList(int newSlotCount)
     {
+        TotalSlotCount += newSlotCount;
         while (items.Count < TotalSlotCount)
         {
             items.Add(null);
@@ -310,7 +311,7 @@ public class InventoryManager : SubClass<GameManager>
         items.AddRange(result);
 
         _CombineQuantities(items);
-        ExtendItemList(); // 비어있는 칸 다시 null로 채우기
+        ExtendItemList(newSlotCount: 0); // 비어있는 칸 다시 null로 채우기
         for (int i = 0; i < items.Count; i++) // 아이템의 슬롯 번호 변경
         {
             if (items[i] != null)
@@ -389,15 +390,14 @@ public class InventoryManager : SubClass<GameManager>
         if (left.itemGrade < right.itemGrade) return true;
         if (left.itemGrade > right.itemGrade) return false;
         // 기타아이템에는 상세타입 없으니 제외
+                
         if (left.itemType != Enum_ItemType.ETC)
         {
-            StateItemData leftItem = left as StateItemData;
-            StateItemData rightItem = right as StateItemData;
-            if (leftItem != null && rightItem != null)
-            {
-                if (leftItem != null && leftItem.detailType < rightItem.detailType) return true;
-                if (leftItem.detailType > rightItem.detailType) return false;
-            }
+            int leftItem = left.GetIntType();
+            int rightItem = right.GetIntType();
+
+            if (leftItem < rightItem) return true;
+            if (leftItem > rightItem) return true;
         }
         if (left.id < right.id) return true;
         if (left.id > right.id) return false;
@@ -465,36 +465,14 @@ public class InventoryManager : SubClass<GameManager>
 
     bool _CheckSameEquipType(int equipPos, int invenPos)
     {
-        int equipType = -1;
-        StateItemData sid = items[invenPos] as StateItemData;
-        switch (sid.detailType)
-        {
-            case Enum_DetailType.Head:
-                equipType = 0;
-                break;
-            case Enum_DetailType.Body:
-                equipType = 1;
-                break;
-            case Enum_DetailType.Hand:
-                equipType = 2;
-                break;
-            case Enum_DetailType.Foot:
-                equipType = 3;
-                break;
-            case Enum_DetailType.Weapon:
-                equipType = 4;
-                break;
-            default:
-                equipType = -1;
-                break;
-        }
-        return equipPos == equipType;
+        int equipItemNumber = items[invenPos].GetIntType();
+        return equipPos == equipItemNumber;
     }
 
     public void EquipItem(int index)
     {
         int equipType;
-        StateItemData sid = items[index] as StateItemData;
+        EquipmentItemData sid = items[index] as EquipmentItemData;
         // 장착 불가시 반환
         if (!PlayerController.instance._playerEquipment.EquipmentCheck(sid, out equipType)) return;
 
@@ -579,6 +557,10 @@ public class InventoryManager : SubClass<GameManager>
         items[index] = null;
 
         inven.UpdateInvenSlot(index);
+        shopSell.UpdateGoldPanel();
+        shopSell.transform.GetChild(0).GetChild(emptyIndex).GetComponent<UI_ShopSlot>().ItemRender();
+    }
+}
         shopSell.UpdateGoldPanel();
         shopSell.transform.GetChild(0).GetChild(emptyIndex).GetComponent<UI_ShopSlot>().ItemRender();
     }
