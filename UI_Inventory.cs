@@ -9,7 +9,7 @@ using UnityEngine.UI;
 public class UI_Inventory : UI_Entity
 {
     List<ItemData> _items;
-    UI_ItemSlot[] _cachedItemSlots;
+    List<UI_ItemSlot> _cachedItemSlots;
 
     Toggle[] itemTypeToggles;
     int itemTypesCount;
@@ -140,8 +140,7 @@ public class UI_Inventory : UI_Entity
         // 테스트 용도 아이템 획득
         _entities[(int)Enum_UI_Inventory.TempAdd].ClickAction = (PointerEventData data) =>
         {
-            _PressGetItem();
-            GameManager.UI.OpenPopup(GameManager.UI.PlayerInfo);
+            _PressGetItem();            
         };
 
         _entities[(int)Enum_UI_Inventory.Close].ClickAction = (PointerEventData data) =>
@@ -155,10 +154,10 @@ public class UI_Inventory : UI_Entity
     // 인벤토리 초기 슬롯 생성
     void _DrawSlots()
     {
-        _cachedItemSlots = new UI_ItemSlot[_items.Count];
+        _cachedItemSlots = new List<UI_ItemSlot>(GameManager.Inven.TotalSlotCount);
         for (int i = 0; i < GameManager.Inven.TotalSlotCount; i++)
         {
-            _cachedItemSlots[i] = GameManager.Resources.Instantiate("Prefabs/UI/Scene/ItemSlot", _content.transform).GetComponent<UI_ItemSlot>();
+            _cachedItemSlots.Add(GameManager.Resources.Instantiate("Prefabs/UI/Scene/ItemSlot", _content.transform).GetComponent<UI_ItemSlot>());
             _cachedItemSlots[i].Index = i;
         }
     }
@@ -246,16 +245,14 @@ public class UI_Inventory : UI_Entity
     /// 인벤토리 확장
     /// </summary>
     /// <param name="newSlot"></param>
-    void _ExpandSlot(int newSlot = 6)
+    void _ExpandSlot(int newSlotCount = 6)
     {
-        for (int i = GameManager.Inven.TotalSlotCount; i < GameManager.Inven.TotalSlotCount + newSlot; i++)
+        for (int i = GameManager.Inven.TotalSlotCount; i < GameManager.Inven.TotalSlotCount + newSlotCount; i++)
         {
-            GameObject _itemSlot = GameManager.Resources.Instantiate("Prefabs/UI/Scene/ItemSlot", _content.transform);
-            _itemSlot.name = "ItemSlot_" + i;
-            _itemSlot.GetComponent<UI_ItemSlot>().Index = i;
+            _cachedItemSlots.Add(GameManager.Resources.Instantiate("Prefabs/UI/Scene/ItemSlot", _content.transform).GetComponent<UI_ItemSlot>());
+            _cachedItemSlots[i].Index = i;
         }
-        GameManager.Inven.TotalSlotCount += newSlot;
-        GameManager.Inven.ExtendItemList();
+        GameManager.Inven.ExtendItemList(newSlotCount);
     }
 
     [Obsolete("Just For Test. Not use anymore.")]
@@ -265,7 +262,6 @@ public class UI_Inventory : UI_Entity
         item.count = 70;
 
         GameManager.Inven.GetItem(item);
-        // TODO 장비아이템은 고유번호
     }
 
     /// <summary>
