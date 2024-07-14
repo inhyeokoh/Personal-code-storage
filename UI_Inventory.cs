@@ -63,9 +63,9 @@ public class UI_Inventory : UI_Entity
         return typeof(Enum_UI_Inventory);
     }
 
-    private void OnDisable()
+    public override void PopupOnDisable()
     {
-        GameManager.UI.PointerOnUI(false); // 포인터가 UI위에 있던 채로 UI가 닫히면 걸었던 행동 제어가 안 꺼지므로 OnDisable에서 꺼줘야함
+        GameManager.UI.BlockPlayerActions(UIManager.Enum_ControlInputAction.BlockMouseClick, false); // 포인터가 UI위에 있던 채로 UI가 닫히면 걸었던 행동 제어가 안 꺼지므로 OnDisable에서 꺼줘야함
         RemoveCursorOnEffectAtItemSlot();
     }
 
@@ -104,12 +104,12 @@ public class UI_Inventory : UI_Entity
             // UI위에 커서 있을 시 캐릭터 행동 제약
             _subUI.PointerEnterAction = (PointerEventData data) =>
             {
-                GameManager.UI.PointerOnUI(true);
+                GameManager.UI.BlockPlayerActions(UIManager.Enum_ControlInputAction.BlockMouseClick, true);
             };
 
             _subUI.PointerExitAction = (PointerEventData data) =>
             {
-                GameManager.UI.PointerOnUI(false);
+                GameManager.UI.BlockPlayerActions(UIManager.Enum_ControlInputAction.BlockMouseClick, false);
             };
         }
 
@@ -140,14 +140,14 @@ public class UI_Inventory : UI_Entity
         // 테스트 용도 아이템 획득
         _entities[(int)Enum_UI_Inventory.TempAdd].ClickAction = (PointerEventData data) =>
         {
-            _PressGetItem();            
+            _PressGetItem();
         };
 
         _entities[(int)Enum_UI_Inventory.Close].ClickAction = (PointerEventData data) =>
         {
             GameManager.UI.ClosePopup(GameManager.UI.Inventory);
         };
-
+                
         gameObject.SetActive(false);
     }
 
@@ -244,7 +244,6 @@ public class UI_Inventory : UI_Entity
     /// <summary>
     /// 인벤토리 확장
     /// </summary>
-    /// <param name="newSlot"></param>
     void _ExpandSlot(int newSlotCount = 6)
     {
         for (int i = GameManager.Inven.TotalSlotCount; i < GameManager.Inven.TotalSlotCount + newSlotCount; i++)
@@ -252,7 +251,7 @@ public class UI_Inventory : UI_Entity
             _cachedItemSlots.Add(GameManager.Resources.Instantiate("Prefabs/UI/Scene/ItemSlot", _content.transform).GetComponent<UI_ItemSlot>());
             _cachedItemSlots[i].Index = i;
         }
-        GameManager.Inven.ExtendItemList(newSlotCount);
+        GameManager.Inven.ExtendItemListWithNull(newSlotCount);
     }
 
     [Obsolete("Just For Test. Not use anymore.")]
