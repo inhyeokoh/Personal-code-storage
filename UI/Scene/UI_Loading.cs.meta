@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/Scripts/UI/Scene/UI_Loading.cs.meta
+guid: 8edb58e5b41de7042b4b97e5b17f4f68
+========
+guid: e913c4fb74a849e42a6ba2c4c6bfb99d
+>>>>>>>> develop:Assets/Scripts/State/ItemBase.cs.meta
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
