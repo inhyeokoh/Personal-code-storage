@@ -91,7 +91,6 @@ public class UI_ItemSlot : UI_Entity
                     }
                 }
             }
-
             _inven.dragImg.gameObject.SetActive(false);
         };
 
@@ -143,7 +142,11 @@ public class UI_ItemSlot : UI_Entity
             }
         };
 
-        _inven.AddListenerToItemTypeToggle();
+
+        if (Index == GameManager.Inven.TotalSlotCount - 1)
+        {
+            _inven.AddListenerToItemTypeToggle();
+        }
     }
 
     /// <summary>
