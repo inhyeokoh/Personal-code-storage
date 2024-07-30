@@ -43,7 +43,7 @@ public class UI_CharacterSelect : UI_Entity
             load_ingame_pkt.CharacterId = GameManager.Data.CurrentCharacter.BaseInfo.CharacterId;
             GameManager.Network.Send(PacketHandler.Instance.SerializePacket(load_ingame_pkt));
 
-            UI_Loading.LoadScene("StatePattern");
+            UI_Loading.LoadScene("InGame");
 #elif DEBUG_MODE
             GameManager.Data.SelectedSlotNum = 0;
 
@@ -51,11 +51,11 @@ public class UI_CharacterSelect : UI_Entity
             load_ingame_pkt.CharacterId = GameManager.Data.CurrentCharacter.BaseInfo.CharacterId;
             GameManager.Network.Send(PacketHandler.Instance.SerializePacket(load_ingame_pkt));
 
-            UI_Loading.LoadScene("StatePattern");
+            UI_Loading.LoadScene("InGame");
 #elif CLIENT_TEST_TITLE
             if (GameManager.Data.CurrentCharacter == null) return;
 
-            UI_Loading.LoadScene("StatePattern");
+            UI_Loading.LoadScene("InGame");
 #endif
         };
 

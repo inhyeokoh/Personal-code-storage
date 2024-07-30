@@ -25,7 +25,6 @@ public class UI_ShopSlot : UI_Entity
         Repurchase
     }
 
-
     enum Enum_UI_ShopSlot
     {
         SlotImg,
