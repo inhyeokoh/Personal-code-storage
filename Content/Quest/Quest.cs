@@ -56,35 +56,6 @@ public class Quest
         }
     }
 
-    /// <summary>
-    /// 퀘스트 시작 레벨 충족 여부와 사전 퀘스트 완료 여부 검사
-    /// </summary>
-/*    public void CheckAvailable()
-    {
-        if (PlayerController.instance._playerStat.Level < questData.requiredLevel) return;
-
-        if (questData.previousQuestID.HasValue && GameManager.Quest.totalQuestDict[questData.previousQuestID.Value].progress != Enum_QuestProgress.Completed) return;
-
-        SetProgress(Enum_QuestProgress.Available);
-    }*/
-
-/*    bool _CheckCanCompleteQuest()
-    {
-        if (progress != Enum_QuestProgress.Ongoing) return false;
-
-        if (_AreAllGoalsCompleted())
-        {
-            SetProgress(Enum_QuestProgress.CanComplete);
-            _canComplete = true;
-            return true;
-        }
-        else
-        {
-            _canComplete = false;
-            return false;
-        }
-    }*/
-
     void _CheckGoals()
     {
         foreach (var goal in questData.goals)
