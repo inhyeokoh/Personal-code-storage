@@ -13,6 +13,8 @@ public class DialogCamera : MonoBehaviour
     {
         _cmTransposer = vCam.GetCinemachineComponent<CinemachineTransposer>();
         _mainCamera = Camera.main.GetComponent<Camera>();
+
+        virtualPlayer = VirtualCharacterCamera.instance.virtualCharacter;
     }
 
     public void SetDialogCamera()
@@ -20,12 +22,6 @@ public class DialogCamera : MonoBehaviour
         int npcID = PlayerController.instance._interaction.InteractingNpcID;
         Transform npcTr = GameManager.Data.npcDict[npcID].transform;
 
-        // 가상의 플레이어 생성
-        if (virtualPlayer == null)
-        {
-            virtualPlayer = GameManager.Resources.Instantiate("Prefabs/VirtualCharacter/Warrior Variant");
-            virtualPlayer.name = "VirtualPlayer";
-        }
         virtualPlayer.SetActive(true);
         virtualPlayer.transform.position = npcTr.position + npcTr.forward * 5f;
 
