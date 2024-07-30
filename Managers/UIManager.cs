@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 public class UIManager : SubClass<GameManager>
 {
@@ -11,31 +10,42 @@ public class UIManager : SubClass<GameManager>
     InputAction moveAction;
     InputAction fireAction;
 
+    public GameObject popupCanvas;
+    public GameObject toolTipCanvas;
+
+    #region OutGame Popup UI
     public UI_Login Login;
     public UI_SignUp SignUp;
     public UI_InputName InputName;
     public UI_Setting Settings;
-    GameObject Blocker;
     public GameObject BlockAll;
     public UI_ConfirmYN ConfirmYN;
     public UI_ConfirmY ConfirmY;
+    GameObject Blocker;
+    #endregion
 
+    #region InGame Popup UI
     public UI_Inventory Inventory;
     public UI_PlayerInfo PlayerInfo;
     public UI_Shop Shop;
-    public UI_InGameConfirmYN InGameConfirmYN;
-    public UI_InGameConfirmY InGameConfirmY;
+    public UI_InGameConfirmYN InGameConfirmYN; // 확인,취소 버튼 있는 팝업
+    public UI_InGameConfirmY InGameConfirmY; // 확인 버튼만 있는 팝업
     public UI_Dialog Dialog;
     public UI_QuestAccessible QuestAccessible;
     public UI_QuestComplete QuestComplete;
-    public UI_StatusWindow StatusWindow;
-    //public GameObject SkillWindow;
+    public UI_SkillWindow SkillWindow;
+    public UI_PersonalTrade PersonalTrade;
+    #endregion
+
+    #region InGame Scene UI
     public UI_InGameMain InGameMain;
+    #endregion
 
-    public GameObject popupCanvas;
+    #region ToolTips
+    public UI_ItemToolTip itemToolTip;
+    #endregion
 
-    int blockerCount = 0;
-    public bool init;
+    int blockerCount = 0; 
 
     public LinkedList<UI_Entity> _activePopupList;
     public List<UI_Entity> _tempClosed;
@@ -44,7 +54,7 @@ public class UIManager : SubClass<GameManager>
     {
         None, // 제어 X
         BlockMouseClick, // 좌클릭, 우클릭 제어
-        BlockPlayerInput // ActionMap 중 "Player" 하위 Actions 전체 제어
+        BlockPlayerInput // ActionMap 중 "Player" 제어
     }
     Enum_ControlInputAction _currentInputActionControl = Enum_ControlInputAction.None;
 
@@ -67,9 +77,15 @@ public class UIManager : SubClass<GameManager>
         Object.DontDestroyOnLoad(popupCanvas);
 #elif CLIENT_TEST_PROPIM || CLIENT_TEST_HYEOK
         ConnectPlayerInput();
+        toolTipCanvas = GameObject.Find("ToolTipCanvas");
+        if (toolTipCanvas != null)
+        {
+            itemToolTip = GameManager.Resources.Instantiate($"Prefabs/UI/ToolTip/ItemToolTip", toolTipCanvas.transform).GetComponent<UI_ItemToolTip>();
+        }
         GameManager.Resources.Instantiate($"Prefabs/UI/Base/UserInputOnUI"); // UI 키입력 기능들을 수행할 수 있는 프리팹 생성
         Inventory = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/Inventory", popupCanvas.transform).GetComponent<UI_Inventory>();
         PlayerInfo = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/PlayerInfo", popupCanvas.transform).GetComponent<UI_PlayerInfo>();
+        SkillWindow = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/SkillWindow", popupCanvas.transform).GetComponent<UI_SkillWindow>();
         Shop = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/ShopUI", popupCanvas.transform).GetComponent<UI_Shop>();
         Blocker = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/Blocker", popupCanvas.transform);
         InGameConfirmYN = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/InGameConfirmYN", popupCanvas.transform).GetComponent<UI_InGameConfirmYN>();
@@ -77,15 +93,14 @@ public class UIManager : SubClass<GameManager>
         Dialog = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/Dialog", popupCanvas.transform).GetComponent<UI_Dialog>();
         QuestAccessible = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/QuestAccessible", popupCanvas.transform).GetComponent<UI_QuestAccessible>();
         QuestComplete = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/QuestComplete", popupCanvas.transform).GetComponent<UI_QuestComplete>();
-
+        PersonalTrade = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/PersonalTrade", popupCanvas.transform).GetComponent<UI_PersonalTrade>();
 #endif
-        init = true;
     }
 
     public enum Enum_PopupSetJunction
     {
         Title,
-        StatePattern    
+        InGame
     }
 
     public void SetGamePopups(Enum_PopupSetJunction sceneName)
@@ -104,13 +119,17 @@ public class UIManager : SubClass<GameManager>
                 BlockAll = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/BlockAll", popupCanvas.transform).gameObject;
                 BlockAll.transform.SetAsLastSibling();
                 break;
-            case Enum_PopupSetJunction.StatePattern:
-                // 기존 OutGamePopup 전부 삭제
+            case Enum_PopupSetJunction.InGame:
                 for (int i = 0; i < popupCanvas.transform.childCount; i++)
                 {
-                    if (popupCanvas.transform.GetChild(i).gameObject.name == "Settings") continue; // 환경설정 팝업 제외
+                    if (popupCanvas.transform.GetChild(i).gameObject.name == "Settings") continue; // OutGamePopup들 중에 환경설정 팝업 제외하고 삭제
 
                     GameManager.Resources.Destroy(popupCanvas.transform.GetChild(i).gameObject);
+                }
+                toolTipCanvas = GameObject.Find("ToolTipCanvas");
+                if (toolTipCanvas != null)
+                {
+                    itemToolTip = GameManager.Resources.Instantiate($"Prefabs/UI/ToolTip/ItemToolTip", toolTipCanvas.transform).GetComponent<UI_ItemToolTip>();
                 }
                 Inventory = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/Inventory", popupCanvas.transform).GetComponent<UI_Inventory>();
                 PlayerInfo = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/PlayerInfo", popupCanvas.transform).GetComponent<UI_PlayerInfo>();
@@ -120,8 +139,9 @@ public class UIManager : SubClass<GameManager>
                 InGameConfirmY = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/InGameConfirmY", popupCanvas.transform).GetComponent<UI_InGameConfirmY>();
                 Dialog = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/Dialog", popupCanvas.transform).GetComponent<UI_Dialog>();
                 QuestAccessible = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/QuestAccessible", popupCanvas.transform).GetComponent<UI_QuestAccessible>();
-                // SkillWindow = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/SkillWindow", popupCanvas.transform);
                 QuestComplete = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/QuestComplete", popupCanvas.transform).GetComponent<UI_QuestComplete>();
+                PersonalTrade = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/PersonalTrade", popupCanvas.transform).GetComponent<UI_PersonalTrade>();
+                SkillWindow = GameManager.Resources.Instantiate($"Prefabs/UI/Popup/SkillWindow", popupCanvas.transform).GetComponent<UI_SkillWindow>();
                 break;
             default:
                 break;

@@ -4,19 +4,27 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 플레이어의 인벤토리와 장비 + (인벤토리 - 상점 상호작용 일부)
+/// 플레이어 소유 아이템 관리
 /// </summary>
 public class InventoryManager : SubClass<GameManager>
 {
+    #region 플레이어 소유 아이템
+    // 인벤토리 아이템
     public List<ItemData> items; // 슬롯 Index에 따른 아이템 리스트
 
     public int TotalSlotCount { get; set; } = 30;
 
-    public List<ItemData> equips;
+    // 장착 장비 아이템
+    public List<ItemData> equipItems;
     public int EquipSlotCount { get; private set; } = 9;
 
+    // 거래할 아이템
+    public ItemData[] tradeItems;
+    public int TradeSlotCount { get; private set; } = 6;
+    #endregion
+
     public UI_Inventory inven;
-    UI_PlayerInfo _playerInfo;
+
     long gold = 100000L;
     public long Gold
     {
@@ -61,7 +69,8 @@ public class InventoryManager : SubClass<GameManager>
     protected override void _Init()
     {
         items = new List<ItemData>(new ItemData[TotalSlotCount]);
-        equips = new List<ItemData>(new ItemData[EquipSlotCount]);
+        equipItems = new List<ItemData>(new ItemData[EquipSlotCount]);
+        tradeItems = new ItemData[TradeSlotCount];
 #if CLIENT_TEST_PROPIM || CLIENT_TEST_HYEOK
         ConnectInven();
 #endif
@@ -73,7 +82,6 @@ public class InventoryManager : SubClass<GameManager>
     public void ConnectInven()
     {
         inven = GameManager.UI.Inventory;
-        _playerInfo = GameManager.UI.PlayerInfo;
         _GetInvenDataFromDB();
     }
 
@@ -300,13 +308,13 @@ public class InventoryManager : SubClass<GameManager>
     /// </summary>
     public void DropEquipItem(int index)
     {
-        ItemData droppedItem = new ItemData(equips[index], 1);
+        ItemData droppedItem = new ItemData(equipItems[index], 1);
         Vector3 playerTr = GameObject.FindWithTag("Player").transform.position;
         Vector3 dropPos = new Vector3(playerTr.x, playerTr.y, playerTr.z);
         ItemManager._item.ItemInstance(droppedItem, dropPos, Quaternion.identity);
-        equips[index] = null;
+        equipItems[index] = null;
 
-        _playerInfo.UpdateEquipUI(index);
+        GameManager.UI.PlayerInfo.UpdateEquipUI(index);
     }
 
     /// <summary>
@@ -440,31 +448,31 @@ public class InventoryManager : SubClass<GameManager>
         // 맞는 장착 아이템 아니면 반환
         if (!_CheckSameEquipType(equipPos, invenPos)) return;
 
-        ItemData temp = equips[equipPos];
-        equips[equipPos] = items[invenPos];
+        ItemData temp = equipItems[equipPos];
+        equipItems[equipPos] = items[invenPos];
         items[invenPos] = temp;
 
         inven.UpdateInvenSlot(invenPos);
-        _playerInfo.UpdateEquipUI(equipPos);
+        GameManager.UI.PlayerInfo.UpdateEquipUI(equipPos);
     }
 
     public void EquipSlotToInven(int equipPos, int invenPos)
     {
         if (items[invenPos] == null) // 드롭한 인벤칸이 비어 있으면 옮기기
         {
-            items[invenPos] = equips[equipPos];
-            equips[equipPos] = null;
+            items[invenPos] = equipItems[equipPos];
+            equipItems[equipPos] = null;
         }
         // 같은 타입의 장비 아이템이면 교환
         else if (_CheckSameEquipType(equipPos, invenPos))
         {
             ItemData temp = items[invenPos];
-            items[invenPos] = equips[equipPos];
-            equips[equipPos] = temp;
+            items[invenPos] = equipItems[equipPos];
+            equipItems[equipPos] = temp;
         }
 
         inven.UpdateInvenSlot(invenPos);
-        _playerInfo.UpdateEquipUI(equipPos);
+        GameManager.UI.PlayerInfo.UpdateEquipUI(equipPos);
     }
 
     bool _CheckSameEquipType(int equipPos, int invenPos)
@@ -482,11 +490,11 @@ public class InventoryManager : SubClass<GameManager>
 
         ItemData temp = null;
         // 장착하고 있던 아이템이 있다면 잠시 보관
-        if (equips[equipType] != null)
+        if (equipItems[equipType] != null)
         {
-            temp = equips[equipType];
+            temp = equipItems[equipType];
         }
-        equips[equipType] = items[index];
+        equipItems[equipType] = items[index];
         items[index] = null;
 
         if (temp != null)
@@ -494,7 +502,7 @@ public class InventoryManager : SubClass<GameManager>
             items[index] = temp;
         }
 
-        _playerInfo.UpdateEquipUI(equipType);
+        GameManager.UI.PlayerInfo.UpdateEquipUI(equipType);
         inven.UpdateInvenSlot(index);
     }
 
@@ -506,10 +514,10 @@ public class InventoryManager : SubClass<GameManager>
         PlayerController.instance._playerEquipment.TakeOff(index);
 
         // 인벤토리 비어 있는 칸 찾아서 넣기
-        items[invenEmptySlot] = equips[index];
-        equips[index] = null;
+        items[invenEmptySlot] = equipItems[index];
+        equipItems[index] = null;
 
-        _playerInfo.UpdateEquipUI(index);
+        GameManager.UI.PlayerInfo.UpdateEquipUI(index);
         inven.UpdateInvenSlot(invenEmptySlot);      
     }
 
@@ -547,7 +555,10 @@ public class InventoryManager : SubClass<GameManager>
         }
     }
 
-    // 인벤 우클릭으로 아이템을 상점 품목으로 이동
+    /// <summary>
+    /// 인벤 우클릭으로 아이템을 상점 품목으로 이동
+    /// </summary>
+    /// <param name="index"></param>
     public void InvenToShop(int index)
     {
         UI_ShopSell shopSell = GameManager.UI.Shop.GetComponentInChildren<UI_ShopSell>();
@@ -558,5 +569,28 @@ public class InventoryManager : SubClass<GameManager>
         inven.UpdateInvenSlot(index);
         shopSell.UpdateGoldPanel();
         shopSell.transform.GetChild(0).GetChild(emptyIndex).GetComponent<UI_ShopSlot>().ItemRender();
+    }
+
+    public void InvenToTradeSlot(int invenPos, int tradePos)
+    {
+        if (tradeItems[tradePos] != null) return;
+
+        tradeItems[tradePos] = items[invenPos];
+        items[invenPos] = null;
+
+        inven.UpdateInvenSlot(invenPos);
+        GameManager.UI.PersonalTrade.myTradeContents.UpdateItemSlotUI(tradePos);
+    }
+
+    public void TradeItemToInven(int tradePos)
+    {
+        int invenEmptySlot = EmptySlot;
+
+        // 인벤토리 비어 있는 칸 찾아서 넣기
+        items[invenEmptySlot] = tradeItems[tradePos];
+        tradeItems[tradePos] = null;
+
+        GameManager.UI.PersonalTrade.myTradeContents.UpdateItemSlotUI(tradePos);
+        inven.UpdateInvenSlot(invenEmptySlot);
     }
 }

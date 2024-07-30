@@ -14,9 +14,10 @@ public class SceneControlManager : SubClass<GameManager>
         Title,
         Select,
         Create,
-        StatePattern,
+        InGame,
+        Loading,
         Inventory,
-        Loading
+        StatePattern,
     }
 
     protected override void _Clear()
@@ -51,11 +52,11 @@ public class SceneControlManager : SubClass<GameManager>
         }
 #endif
 #if SERVER || DEBUG_MODE || CLIENT_TEST_TITLE
-        else if (curSceneIdx == (int)Enum_Scenes.StatePattern)
+        else if (curSceneIdx == (int)Enum_Scenes.InGame)
         {
             GameManager.UI.ConnectPlayerInput();
             GameManager.Data.NpcTableParsing("NpcTable");
-            GameManager.UI.SetGamePopups(UIManager.Enum_PopupSetJunction.StatePattern);
+            GameManager.UI.SetGamePopups(UIManager.Enum_PopupSetJunction.InGame);
             GameManager.Inven.ConnectInven();
 
             for (int i = 0; i < GameManager.Data.dropTestItems.Count; i++)
@@ -77,7 +78,7 @@ public class SceneControlManager : SubClass<GameManager>
         {
             SceneManager.LoadScene(--curSceneIdx);
         }
-        else if (curSceneIdx == (int)Enum_Scenes.StatePattern || curSceneIdx == (int)Enum_Scenes.Inventory)
+        else if (curSceneIdx == (int)Enum_Scenes.InGame || curSceneIdx == (int)Enum_Scenes.Inventory)
         {
             // TODO 게임 종료 묻는 팝업 띄우고 로그인 화면으로 전환
             ExitGame();
