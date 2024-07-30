@@ -15,8 +15,13 @@ public class UI_ConfirmYN : UI_Entity
     bool _useBlocker = true;
     TMP_Text _mainText;
     Enum_ConfirmTypes confirmType = Enum_ConfirmTypes.AskDecidingNickName;
+    public enum Enum_ConfirmTypes
+    {
+        AskDecidingNickName,
+        AskDeleteCharacter
+    }
 
-    enum Enum_UI_Confirm
+    enum Enum_UI_ConfirmYN
     {
         Panel,
         Interact,
@@ -25,20 +30,15 @@ public class UI_ConfirmYN : UI_Entity
         Cancel
     }
 
-    public enum Enum_ConfirmTypes
-    {
-        AskDecidingNickName,
-        AskDeleteCharacter
-    }
 
     protected override Type GetUINamesAsType()
     {
-        return typeof(Enum_UI_Confirm);
+        return typeof(Enum_UI_ConfirmYN);
     }
 
     public override void PopupOnEnable()
     {
-        if (!_init || !_useBlocker) return;
+        if (!_useBlocker) return;
 
         GameManager.UI.UseBlocker(true);
     }
@@ -48,26 +48,14 @@ public class UI_ConfirmYN : UI_Entity
         GameManager.UI.UseBlocker(false);
     }
 
-/*    private void OnEnable()
-    {
-        if (!_init || !_useBlocker) return;
-
-        GameManager.UI.UseBlocker(true);
-    }
-
-    private void OnDisable()
-    {
-        GameManager.UI.UseBlocker(false);
-    }*/
-
     protected override void Init()
     {
         base.Init();
 
-        _mainText = _entities[(int)Enum_UI_Confirm.MainText].GetComponent<TMP_Text>();
+        _mainText = _entities[(int)Enum_UI_ConfirmYN.MainText].GetComponent<TMP_Text>();
         _mainText.text = "Default";
 
-        _entities[(int)Enum_UI_Confirm.Accept].ClickAction = (PointerEventData data) => {
+        _entities[(int)Enum_UI_ConfirmYN.Accept].ClickAction = (PointerEventData data) => {
             switch (confirmType)
             {
                 case Enum_ConfirmTypes.AskDecidingNickName:
@@ -97,12 +85,11 @@ public class UI_ConfirmYN : UI_Entity
             }
         };
 
-        _entities[(int)Enum_UI_Confirm.Cancel].ClickAction = (PointerEventData data) => {
+        _entities[(int)Enum_UI_ConfirmYN.Cancel].ClickAction = (PointerEventData data) => {
             GameManager.UI.ClosePopup(GameManager.UI.ConfirmYN);
         };
 
         gameObject.SetActive(false);
-        _init = true;
     }
 
     public void ChangeText(Enum_ConfirmTypes type)
@@ -125,6 +112,6 @@ public class UI_ConfirmYN : UI_Entity
     public override void EnterAction()
     {
         base.EnterAction();
-        _entities[(int)Enum_UI_Confirm.Accept].ClickAction?.Invoke(null);
+        _entities[(int)Enum_UI_ConfirmYN.Accept].ClickAction?.Invoke(null);
     }
 }

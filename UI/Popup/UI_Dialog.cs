@@ -5,7 +5,6 @@ using UnityEngine.EventSystems;
 
 public class UI_Dialog : UI_Entity
 {
-    bool _init;
     VCamSwitcher vCamSwitcher;
 
     #region 대화창

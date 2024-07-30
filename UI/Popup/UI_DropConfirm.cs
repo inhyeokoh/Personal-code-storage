@@ -69,7 +69,7 @@ public class UI_DropConfirm : UI_Entity
                 _mainText.text = $"{GameManager.Inven.items[slotIndex].name} 아이템을 버리시겠습니까?";
                 break;
             case Enum_DropUIParent.PlayerInfo:
-                _mainText.text = $"{GameManager.Inven.equips[slotIndex].name} 아이템을 버리시겠습니까?";
+                _mainText.text = $"{GameManager.Inven.equipItems[slotIndex].name} 아이템을 버리시겠습니까?";
                 break;
             default:
                 break;

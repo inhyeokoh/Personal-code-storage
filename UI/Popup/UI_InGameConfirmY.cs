@@ -99,4 +99,10 @@ public class UI_InGameConfirmY : UI_Entity
                 break;
         }
     }
+
+    public override void EnterAction()
+    {
+        base.EnterAction();
+        _entities[(int)Enum_UI_InGameConfirmY.Accept].ClickAction?.Invoke(null);
+    }
 }

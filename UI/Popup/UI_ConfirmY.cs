@@ -14,15 +14,6 @@ public class UI_ConfirmY : UI_Entity
     bool _useBlocker = true;
     TMP_Text _mainText;
     Enum_ConfirmTypes confirmType;
-
-    enum Enum_UI_Confirm
-    {
-        Panel,
-        Interact,
-        MainText,
-        Accept
-    }
-
     public enum Enum_ConfirmTypes
     {
         TimeOut,
@@ -37,9 +28,18 @@ public class UI_ConfirmY : UI_Entity
         CharacterDeleteSuccess
     }
 
+    enum Enum_UI_ConfirmY
+    {
+        Panel,
+        Interact,
+        MainText,
+        Accept
+    }
+
+
     public override void PopupOnEnable()
     {
-        if (!_init || !_useBlocker) return;
+        if (!_useBlocker) return;
 
         GameManager.UI.UseBlocker(true);
     }
@@ -51,16 +51,16 @@ public class UI_ConfirmY : UI_Entity
 
     protected override Type GetUINamesAsType()
     {
-        return typeof(Enum_UI_Confirm);
+        return typeof(Enum_UI_ConfirmY);
     }
 
     protected override void Init()
     {
         base.Init();
 
-        _mainText = _entities[(int)Enum_UI_Confirm.MainText].GetComponent<TMP_Text>();
+        _mainText = _entities[(int)Enum_UI_ConfirmY.MainText].GetComponent<TMP_Text>();
 
-        _entities[(int)Enum_UI_Confirm.Accept].ClickAction = (PointerEventData data) => {
+        _entities[(int)Enum_UI_ConfirmY.Accept].ClickAction = (PointerEventData data) => {
             if (confirmType == Enum_ConfirmTypes.SignUpSuccess)
             {
                 GameManager.UI.ClosePopup(GameManager.UI.SignUp);
@@ -119,6 +119,6 @@ public class UI_ConfirmY : UI_Entity
     public override void EnterAction()
     {
         base.EnterAction();
-        _entities[(int)Enum_UI_Confirm.Accept].ClickAction?.Invoke(null);
+        _entities[(int)Enum_UI_ConfirmY.Accept].ClickAction?.Invoke(null);
     }
 }

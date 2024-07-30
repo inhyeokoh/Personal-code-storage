@@ -9,24 +9,19 @@ using UnityEngine.UI;
 public class UI_Inventory : UI_Entity
 {
     List<ItemData> _items;
-    List<UI_ItemSlot> _cachedItemSlots;
+    List<UI_InventoryItemSlot> _cachedItemSlots;
 
     Toggle[] itemTypeToggles;
     int itemTypesCount;
 
     GameObject _content;  // 아이템 슬롯들 부모 오브젝트
     public GameObject closeBtn;
-    Vector2 _descrUISize;
     TMP_Text goldText;
     public Rect panelRect;
 
     #region 아이템 드래그 이미지, 설명 패널
     public Image dragImg;
-    public GameObject descrPanel;
-    public TMP_Text descrPanelItemNameText;
-    public Image descrPanelItemImage;
-    public TMP_Text descrPanelDescrText;
-    public int? highlightedSlotIndex = null;
+    public UI_InventoryItemSlot highlightedSlot;
     #endregion
 
     #region 인벤토리 UI 드래그
@@ -46,8 +41,7 @@ public class UI_Inventory : UI_Entity
         TempAdd,
         Gold,
         Close,
-        DragImg,
-        DescrPanel,
+        DragImg
     }
 
     enum Enum_FilteringTypes
@@ -66,7 +60,14 @@ public class UI_Inventory : UI_Entity
     public override void PopupOnDisable()
     {
         GameManager.UI.BlockPlayerActions(UIManager.Enum_ControlInputAction.BlockMouseClick, false); // 포인터가 UI위에 있던 채로 UI가 닫히면 걸었던 행동 제어가 안 꺼지므로 OnDisable에서 꺼줘야함
-        RemoveCursorOnEffectAtItemSlot();
+
+        if (highlightedSlot != null)
+        {
+            Color highlighted = highlightedSlot.highlightImg.color;
+            highlighted.a = 0f;
+            highlightedSlot.highlightImg.color = highlighted;
+        }
+        GameManager.UI.itemToolTip.gameObject.SetActive(false);
     }
 
     protected override void Init()
@@ -76,14 +77,10 @@ public class UI_Inventory : UI_Entity
         _items = GameManager.Inven.items;
         _content = _entities[(int)Enum_UI_Inventory.ScrollView].transform.GetChild(0).GetChild(0).gameObject;
         panelRect = _entities[(int)Enum_UI_Inventory.Panel].GetComponent<RectTransform>().rect;
-        descrPanel = _entities[(int)Enum_UI_Inventory.DescrPanel].gameObject;
-        _descrUISize = _GetUISize(descrPanel);
+
         dragImg = _entities[(int)Enum_UI_Inventory.DragImg].GetComponent<Image>();
         closeBtn = _entities[(int)Enum_UI_Inventory.Close].gameObject;
         itemTypesCount = Enum.GetValues(typeof(Enum_FilteringTypes)).Length;
-        descrPanelItemNameText = descrPanel.transform.GetChild(0).GetComponentInChildren<TMP_Text>();
-        descrPanelItemImage = descrPanel.transform.GetChild(1).GetComponent<Image>();
-        descrPanelDescrText = descrPanel.transform.GetChild(2).GetComponentInChildren<TMP_Text>();
 
         _DrawSlots();
         _SetItemTypeToggle();
@@ -154,10 +151,10 @@ public class UI_Inventory : UI_Entity
     // 인벤토리 초기 슬롯 생성
     void _DrawSlots()
     {
-        _cachedItemSlots = new List<UI_ItemSlot>(GameManager.Inven.TotalSlotCount);
+        _cachedItemSlots = new List<UI_InventoryItemSlot>(GameManager.Inven.TotalSlotCount);
         for (int i = 0; i < GameManager.Inven.TotalSlotCount; i++)
         {
-            _cachedItemSlots.Add(GameManager.Resources.Instantiate("Prefabs/UI/Scene/ItemSlot", _content.transform).GetComponent<UI_ItemSlot>());
+            _cachedItemSlots.Add(GameManager.Resources.Instantiate("Prefabs/UI/Scene/ItemSlot", _content.transform).GetOrAddComponent<UI_InventoryItemSlot>());
             _cachedItemSlots[i].Index = i;
         }
     }
@@ -248,7 +245,7 @@ public class UI_Inventory : UI_Entity
     {
         for (int i = GameManager.Inven.TotalSlotCount; i < GameManager.Inven.TotalSlotCount + newSlotCount; i++)
         {
-            _cachedItemSlots.Add(GameManager.Resources.Instantiate("Prefabs/UI/Scene/ItemSlot", _content.transform).GetComponent<UI_ItemSlot>());
+            _cachedItemSlots.Add(GameManager.Resources.Instantiate("Prefabs/UI/Scene/ItemSlot", _content.transform).GetComponent<UI_InventoryItemSlot>());
             _cachedItemSlots[i].Index = i;
         }
         GameManager.Inven.ExtendItemListWithNull(newSlotCount);
@@ -276,57 +273,6 @@ public class UI_Inventory : UI_Entity
         }
 
         return false;
-    }
-
-    /// <summary>
-    /// UI 사각형 좌표의 좌측하단과 우측상단 좌표를 전역 좌표로 바꿔서 UI 사이즈 계산.
-    /// 초기에 한번만 실행됨.
-    /// </summary>
-    Vector2 _GetUISize(GameObject UI)
-    {
-        Vector2 leftBottom = UI.transform.TransformPoint(UI.GetComponent<RectTransform>().rect.min);
-        Vector2 rightTop = UI.transform.TransformPoint(UI.GetComponent<RectTransform>().rect.max);
-        Vector2 UISize = rightTop - leftBottom;
-        return UISize;
-    }
-
-    public void RestrictItemDescrPos()
-    {
-        Vector2 descrPosOption = new Vector2(170f, -135f);
-        StartCoroutine(RestrictUIPos(descrPanel, _descrUISize, descrPosOption));
-    }
-
-    public void StopRestrictItemDescrPos()
-    {
-        StopCoroutine(RestrictUIPos(descrPanel, _descrUISize));
-    }
-
-    /// <summary>
-    /// UI가 화면 밖으로 넘어가지 않도록 위치 제한
-    /// </summary>
-    IEnumerator RestrictUIPos(GameObject UI, Vector2 UISize, Vector2? descrPosOption = null)
-    {
-        while (true)
-        {
-            Vector3 mousePos = Input.mousePosition;
-            float x = Math.Clamp(mousePos.x + descrPosOption.Value.x, UISize.x / 2, Screen.width - (UISize.x / 2));
-            float y = Math.Clamp(mousePos.y + descrPosOption.Value.y, UISize.y / 2, Screen.height - (UISize.y / 2));
-            UI.transform.position = new Vector2(x, y);
-            yield return null;
-        }
-    }
-
-    public void RemoveCursorOnEffectAtItemSlot()
-    {
-        if (highlightedSlotIndex.HasValue)
-        {
-            int index = highlightedSlotIndex.Value;
-            Color highlighted = _cachedItemSlots[index].highlightImg.color;
-            highlighted.a = 0f;
-            _cachedItemSlots[index].highlightImg.color = highlighted;
-        }
-        descrPanel.SetActive(false);
-        StopRestrictItemDescrPos();
     }
 
     public void UpdateGoldPanel(long gold)
